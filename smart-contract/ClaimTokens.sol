@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 interface TokenDecimal {
     function decimals() external returns (uint8);
@@ -16,21 +17,28 @@ contract ClaimTokens is Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     IERC20 private token;
+    bytes32 public root;
 
     uint256 public totalClaimed;
 
-    uint256[] public tokensToBeClaimed;
-
-    address[] public whitelistUsers;
     address private tokenHolder;
 
     mapping(address => bool) public isClaimed;
 
     event Claimed(address indexed tokenAddress, address indexed user, uint256 amount, uint256 indexed timestamp);
 
-    constructor(address _token, address _tokenholder) {
+    constructor(address _token, address _tokenholder, bytes32 _root) {
         token = IERC20(_token);
         tokenHolder = _tokenholder;
+        root = _root;
+    }
+
+    function isValid(bytes32[] memory proof, bytes32 leaf) public view returns (bool) {
+       return MerkleProof.verify(proof, root, leaf);
+    }
+
+    function setRoot(bytes32 _root) external onlyOwner {
+        root = _root;
     }
 
     function _getToken() external view returns(IERC20) {
@@ -49,53 +57,22 @@ contract ClaimTokens is Ownable, ReentrancyGuard, Pausable {
         tokenHolder = _tokenholder;
     }
 
-    function _whitelistUsersLength() external view returns(uint) {
-        return whitelistUsers.length;
-    }
-
-    function _tokensToBeClaimedLength() external view returns(uint) {
-        return tokensToBeClaimed.length;
-    }
-
-    function Claim() external nonReentrant whenNotPaused {
+    function Claim(uint256 _amount, bytes32[] memory proof) external nonReentrant whenNotPaused {
         require(msg.sender != address(0), "CONTRACT: Caller is zero address");
-        require(whitelistUsers.length == tokensToBeClaimed.length, "CONTRACT: users and tokens length mismatch");
-        (bool isWhiteList, uint256 i) = isWhitelistedUser(msg.sender);
-        require(isWhiteList, "CONTRACT: Caller is not whitelisted");
         require(!isClaimed[msg.sender], "CONTRACT: Tokens already claimed!!");
         require(address(token) != address(0), "CONTRACT: Token is not set.");
+        require(isValid(proof, keccak256(abi.encodePacked(msg.sender, _amount))), "Caller not whitelisted");
 
-        uint256 claimedTokens = tokensToBeClaimed[i] * 10 ** TokenDecimal(address(token)).decimals();
+        uint256 claimedTokens = _amount * 10 ** TokenDecimal(address(token)).decimals();
         totalClaimed += claimedTokens;
         token.safeTransferFrom(tokenHolder, msg.sender, claimedTokens);
         isClaimed[msg.sender] = true;
         emit Claimed(address(token), msg.sender, claimedTokens, block.timestamp);
     }
 
-    function addWhitelistUsers(address[] memory _addresses) external onlyOwner {
-        whitelistUsers = _addresses;
-    }
-
-    function addTokensToBeClaimed(uint256[] memory _tokens) external onlyOwner {
-        tokensToBeClaimed = _tokens;
-    }
-
-    function isWhitelistedUser(address _address) public view returns(bool, uint256) {
-        for(uint256 i=0; i < whitelistUsers.length; i++) {
-            if(_address == whitelistUsers[i]) {
-                return (true, i);
-            }
-        }
-        return (false, 0);
-    }
-
     function reset() external onlyOwner {
-        for(uint i=0; i < whitelistUsers.length; i++) {
-            delete isClaimed[whitelistUsers[i]];
-        }
+        delete isClaimed;
         totalClaimed = 0;
-        delete tokensToBeClaimed;
-        delete whitelistUsers;
     }
 
     function pause() public onlyOwner {
