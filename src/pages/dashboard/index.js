@@ -186,9 +186,9 @@ const Token = styled(Paper)(({ theme }) => ({
 const DashboardDefault = () => {
     const { address, isConnected,  } = useAccount()
     const [amount, setAmount] = useState(0)
-    const dAmount = useDebounce(amount, 10)
+    const dAmount = useDebounce(amount, 500)
     const [proof, setProof] = useState('')
-    const dProof = useDebounce(proof, 10)
+    const dProof = useDebounce(proof, 500)
     const [tree, setTree] = useState()
     const [claimToken, setClaimToken] = useState(0)
     const { data: signer } = useSigner()
@@ -234,11 +234,7 @@ const DashboardDefault = () => {
 
         const balance = leafNodes.filter(item => item.address.toLowerCase() === address.toLowerCase())
         if(balance.length > 0) {
-            setAmount(ethers.utils.parseUnits(balance[0].balance.toString(), CONFIG.ORBN_DECIMALS))
-            const packed = ethers.utils.solidityPack(["address","uint256"], [ balance[0].address, ethers.utils.parseUnits(balance[0].balance.toString(), CONFIG.ORBN_DECIMALS)])
-            const proof = tree.getHexProof(keccak256(packed))
-            console.log(proof)
-            setProof(proof)
+            
         } else {
             AlertMsg({ title: 'Oops!', msg: 'Connected wallet is not whitelisted', icon: 'error' })
             return
@@ -272,13 +268,17 @@ const DashboardDefault = () => {
 
         console.log(root)
 
-    }, [])
-
-    useEffect(() => {
         if(isConnected) {
             const balance = leafNodes.filter(item => item.address.toLowerCase() === address.toLowerCase())
             if(balance.length > 0) {
                 setClaimToken(balance[0].balance)
+                setAmount(ethers.utils.parseUnits(balance[0].balance.toString(), CONFIG.ORBN_DECIMALS))
+                const packed = ethers.utils.solidityPack(["address","uint256"], [ balance[0].address, ethers.utils.parseUnits(balance[0].balance.toString(), CONFIG.ORBN_DECIMALS)])
+                const proof = merkleTree.getHexProof(keccak256(packed))
+                console.log(proof)
+                setProof(proof)
+            } else {
+                setClaimToken(0)
             }
         }
 
