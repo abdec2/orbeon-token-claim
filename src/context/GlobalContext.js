@@ -40,16 +40,11 @@ export const GlobalProvider = ({ children }) => {
             {
                 ...claimContract,
                 functionName: 'totalClaimed',
-            },
-            {
-                ...claimContract,
-                functionName: '_whitelistUsersLength',
-            },
+            }
         ],
         onSuccess(data) {
             updateTotalSupply(data[0].toString())
             updateTotalClaimed(data[1].toString())
-            updateNoOfUser(data[2].toString())
         },
     })
 

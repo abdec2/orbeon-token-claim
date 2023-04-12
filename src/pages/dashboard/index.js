@@ -36,16 +36,22 @@ import TimeComponent from 'components/TimeComponent';
 import { AlertMsg } from 'components/AlertMsg'
 import claimAbi from './../../configs/claim.json'
 import TokenAbi from './../../configs/token.json'
+const keccak256 = require('keccak256');
+const { MerkleTree } = require('merkletreejs')
+
+
 
 
 // assets
 import { GlobalContext } from 'context/GlobalContext';
 import { CONFIG } from 'configs/config';
+import { leafNodes } from './../../configs/config'
 import { ethers } from 'ethers';
 import { useAccount, useSigner } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import useAccountData from 'hooks/useAccountData';
 import { useContractWrite, usePrepareContractWrite, useWaitForTransaction } from '../../../node_modules/wagmi/dist/index';
+import { useDebounce } from 'usehooks-ts';
 
 // avatar style
 const avatarSX = {
@@ -179,6 +185,12 @@ const Token = styled(Paper)(({ theme }) => ({
 
 const DashboardDefault = () => {
     const { address, isConnected,  } = useAccount()
+    const [amount, setAmount] = useState(0)
+    const dAmount = useDebounce(amount, 10)
+    const [proof, setProof] = useState('')
+    const dProof = useDebounce(proof, 10)
+    const [tree, setTree] = useState()
+    const [claimToken, setClaimToken] = useState(0)
     const { data: signer } = useSigner()
     const { openConnectModal } = useConnectModal()
     const { blockchainData, updateLoading, fetchData } = useContext(GlobalContext)
@@ -187,6 +199,7 @@ const DashboardDefault = () => {
         address: CONFIG.CONTRACT_ADDRESS,
         abi: claimAbi, 
         functionName: 'Claim',
+        args: [dAmount, dProof],
         overrides: {
             from: address
         }
@@ -214,18 +227,28 @@ const DashboardDefault = () => {
             openConnectModal()
             return
         }
-        if(!blockchainData.userData.whitelisted) {
-            AlertMsg({ title: 'Oops!', msg: 'Connected address is not whitelisted', icon: 'error' })
-            return
-        }
         if(blockchainData.userData.claimed) {
             AlertMsg({ title: 'Oops!', msg: 'You have already claimed your ORBN', icon: 'error' })
             return
         }
+
+        const balance = leafNodes.filter(item => item.address.toLowerCase() === address.toLowerCase())
+        if(balance.length > 0) {
+            setAmount(ethers.utils.parseUnits(balance[0].balance.toString(), CONFIG.ORBN_DECIMALS))
+            const packed = ethers.utils.solidityPack(["address","uint256"], [ balance[0].address, ethers.utils.parseUnits(balance[0].balance.toString(), CONFIG.ORBN_DECIMALS)])
+            const proof = tree.getHexProof(keccak256(packed))
+            console.log(proof)
+            setProof(proof)
+        } else {
+            AlertMsg({ title: 'Oops!', msg: 'Connected wallet is not whitelisted', icon: 'error' })
+            return
+        }
+        
         await prepareContract()
         claim()
         
         } catch (e) {
+            console.log(e)
             AlertMsg({ title: 'Oops!', msg: 'Something went wrong', icon: 'error' })
         }
 
@@ -236,6 +259,30 @@ const DashboardDefault = () => {
             updateLoading(true)
         } 
     }, [isLoading])
+
+    useEffect(() => {
+        const arr = leafNodes.map((i) => {
+            const packed = ethers.utils.solidityPack(["address","uint256"], [ i.address, ethers.utils.parseUnits(i.balance.toString(), CONFIG.ORBN_DECIMALS)])
+            return keccak256(packed);
+        })
+
+        const merkleTree = new MerkleTree(arr, keccak256, { sortPairs: true });
+        setTree(merkleTree)
+        const root = merkleTree.getHexRoot()
+
+        console.log(root)
+
+    }, [])
+
+    useEffect(() => {
+        if(isConnected) {
+            const balance = leafNodes.filter(item => item.address.toLowerCase() === address.toLowerCase())
+            if(balance.length > 0) {
+                setClaimToken(balance[0].balance)
+            }
+        }
+
+    }, [isConnected, address])
 
     return (
         <>
@@ -248,7 +295,7 @@ const DashboardDefault = () => {
                     <StakingDetail title="Total Token Claimed" count={new Intl.NumberFormat('en-US').format(ethers.utils.formatUnits(blockchainData.tokenClaimed, CONFIG.ORBN_DECIMALS))} />
                 </Grid>
                 <Grid item xs={12} sm={12} md={4} lg={4}>
-                    <StakingDetail title="Number of Users" count={new Intl.NumberFormat('en-US').format(blockchainData.noOfUsers)} />
+                    <StakingDetail title="No of Tokens to be claimed" count={new Intl.NumberFormat('en-US').format(claimToken)} />
                 </Grid>
             </Grid>
             <Grid container rowSpacing={4.5} columnSpacing={3.75} direction="row" alignItems="center" justifyContent="center" sx={{height: '100%'}} >

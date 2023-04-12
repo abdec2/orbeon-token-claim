@@ -19,16 +19,11 @@ const useAccountData = () => {
                 ...claimContract,
                 functionName: 'isClaimed',
                 args: [address]
-            },
-            {
-                ...claimContract,
-                functionName: 'isWhitelistedUser',
-                args: [address]
             }
         ], 
         enabled: false,
         onSuccess(data) {
-            updateUserData({claimed: data[0], whitelisted: data[1][0]})
+            updateUserData({claimed: data[0]})
         }
     })
 

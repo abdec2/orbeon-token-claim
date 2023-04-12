@@ -63,16 +63,11 @@ contract ClaimTokens is Ownable, ReentrancyGuard, Pausable {
         require(address(token) != address(0), "CONTRACT: Token is not set.");
         require(isValid(proof, keccak256(abi.encodePacked(msg.sender, _amount))), "Caller not whitelisted");
 
-        uint256 claimedTokens = _amount * 10 ** TokenDecimal(address(token)).decimals();
+        uint256 claimedTokens = _amount;
         totalClaimed += claimedTokens;
         token.safeTransferFrom(tokenHolder, msg.sender, claimedTokens);
         isClaimed[msg.sender] = true;
         emit Claimed(address(token), msg.sender, claimedTokens, block.timestamp);
-    }
-
-    function reset() external onlyOwner {
-        delete isClaimed;
-        totalClaimed = 0;
     }
 
     function pause() public onlyOwner {

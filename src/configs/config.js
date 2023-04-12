@@ -1,7 +1,7 @@
 export const CONFIG = {
     ORBN_ADDRESS: "0xF7dC1EB1844dfC4c1c8aa44b9016d152e3b65087",
     ORBN_DECIMALS: 9,
-    CONTRACT_ADDRESS: '0x90a4FbF96b8D5a8C1c041745D9a850C47BD8f6fc'
+    CONTRACT_ADDRESS: '0xe986cCeC4b442E1963455C54FEfC4B254a87Bb01'
 }
 
 export const leafNodes = [{"address": "0xbFEc0aB4A478E16F2Eba81521626D358883489aa", "balance": 10887},
@@ -4655,7 +4655,6 @@ export const leafNodes = [{"address": "0xbFEc0aB4A478E16F2Eba81521626D358883489a
 {"address": "0xd19b7bA2493767ED91D8d26EA9004664c6f99C0c", "balance": 3597},
 {"address": "0xEFd1D80B3DEE922C0e29Ab6a8218ABFD7073e612", "balance": 3611},
 {"address": "0x517b1306f34B899a129102DFF97Fc6Ae4C9555df", "balance": 5000},
-{"address": "aE57f89E5Ed057d697e03Dd1921ecBf60943d2b7,1"9 "balance": 34},
 {"address": "0xAEB828A8Df2039739eF0eC51A16e4fc358B0aA20", "balance": 1200},
 {"address": "0x720428cd485811335D492d68171483B83904E64c", "balance": 898},
 {"address": "0x187cb8049E2Ab5ed0FC13d1C8Bfacadd354B237C", "balance": 1961},
@@ -6215,6 +6214,5 @@ export const leafNodes = [{"address": "0xbFEc0aB4A478E16F2Eba81521626D358883489a
 {"address": "0xeA13a5913bDa0f0E99f10D4FE5716B7Aee38aaE3", "balance": 524504},
 {"address": "0x5baA0f14D09864929c5fC8AbDfDc466dcb72be9d", "balance": 100},
 {"address": "0x64DC48F2Ae171f7Ae966f15844eF2f8751665110", "balance": 100},
-{"address": "0x59305A0CDee7525940FFA0F42fFb011FFE9D70Fc", "balance": 100},
-{"address": "0x2Ab7B7c170D0082b57b8C0F831a0773bCE45770F", "balance": 100}
+{"address": "0x59305A0CDee7525940FFA0F42fFb011FFE9D70Fc", "balance": 100}
 ]
