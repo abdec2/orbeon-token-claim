@@ -196,18 +196,20 @@ const DashboardDefault = () => {
     const { blockchainData, updateLoading, fetchData } = useContext(GlobalContext);
     const [stage, setStage] = useState('');
     const ADDRESS = stage === "1" ? CONFIG.CONTRACT_ADDRESS_ONE : stage === "2" ? CONFIG.CONTRACT_ADDRESS_TWO : stage === "3" ? CONFIG.CONTRACT_ADDRESS_THREE : '';
+    const totalSupply = stage === "1" ? blockchainData?.contract1.totalSupply : stage === "2" ? blockchainData?.contract2.totalSupply : stage === "3" ? blockchainData?.contract3.totalSupply : 0;
+    const claimTokens = stage === "1" ? blockchainData?.contract1.tokenClaimed : stage === "2" ? blockchainData?.contract2.tokenClaimed : stage === "3" ? blockchainData?.contract3.tokenClaimed : 0;
    
     const { config, refetch: prepareContract } = usePrepareContractWrite({
         enabled: false,
         address:
-            stage === 1
+            stage === '1'
                 ? CONFIG.CONTRACT_ADDRESS_ONE
-                : stage === 2
+                : stage === '2'
                 ? CONFIG.CONTRACT_ADDRESS_TWO
-                : stage === 3
+                : stage === '3'
                 ? CONFIG.CONTRACT_ADDRESS_THREE
                 : '',
-        abi: TokenAbi,
+        abi: claimAbi,
         functionName: 'Claim',
         args: [dAmount, dProof],
         overrides: {
@@ -249,7 +251,9 @@ const DashboardDefault = () => {
                 return;
             }
 
-            const balance = leafNodes.filter((item) => item.address.toLowerCase() === address.toLowerCase());
+            const lefNode = stage === "1" ? leafNodeOne : stage === "2" ? leafNodeTwo : leafNodes;
+
+            const balance = lefNode.filter((item) => item.address.toLowerCase() === address.toLowerCase());
             if (balance.length > 0) {
             } else {
                 AlertMsg({ title: 'Oops!', msg: 'Connected wallet is not whitelisted', icon: 'error' });
@@ -289,7 +293,6 @@ const DashboardDefault = () => {
             const root = merkleTree.getHexRoot();
 
             console.log(root);
-            address;
             if (isConnected) {
                 const balance = leafNodeOne.filter((item) => item.address.toLowerCase() === address.toLowerCase());
                 if (balance.length > 0) {
@@ -371,6 +374,7 @@ const DashboardDefault = () => {
         }
     }, [isConnected, address, stage]);
 
+
     return (
         <>
             <Grid container rowSpacing={4.5} columnSpacing={3.75} sx={{ paddingTop: '5px', mb: '10px' }}>
@@ -379,7 +383,7 @@ const DashboardDefault = () => {
                     <StakingDetail
                         title="Total Supply"
                         count={new Intl.NumberFormat('en-US').format(
-                            ethers.utils.formatUnits(blockchainData.totalSupply, CONFIG.ORBN_DECIMALS)
+                            ethers.utils.formatUnits(totalSupply, CONFIG.ORBN_DECIMALS)
                         )}
                     />
                 </Grid>
@@ -387,7 +391,7 @@ const DashboardDefault = () => {
                     <StakingDetail
                         title="Total Token Claimed"
                         count={new Intl.NumberFormat('en-US').format(
-                            ethers.utils.formatUnits(blockchainData.tokenClaimed, CONFIG.ORBN_DECIMALS)
+                            ethers.utils.formatUnits(claimTokens, CONFIG.ORBN_DECIMALS)
                         )}
                     />
                 </Grid>

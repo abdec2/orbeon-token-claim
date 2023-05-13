@@ -10,8 +10,16 @@ const orbnContract = {
     abi: tokenAbi,
 }
 
-const claimContract = {
-    address: CONFIG.CONTRACT_ADDRESS,
+const claimContract1 = {
+    address: CONFIG.CONTRACT_ADDRESS_ONE,
+    abi: claimAbi,
+}
+const claimContract2 = {
+    address: CONFIG.CONTRACT_ADDRESS_TWO,
+    abi: claimAbi,
+}
+const claimContract3 = {
+    address: CONFIG.CONTRACT_ADDRESS_THREE,
     abi: claimAbi,
 }
 
@@ -19,11 +27,20 @@ const claimContract = {
 const initialState = {
     loading: false,
     noOfUsers: 0,
-    tokenClaimed: 0,
-    totalSupply: 0, 
+    contract1: {
+        tokenClaimed: 0,
+        totalSupply: 0
+    },
+    contract2: {
+        tokenClaimed: 0,
+        totalSupply: 0
+    },
+    contract3: {
+        tokenClaimed: 0,
+        totalSupply: 0
+    },
     userData: {
-        claimed: false,
-        whitelisted: false
+        claimed: false
     }
 }
 
@@ -38,13 +55,22 @@ export const GlobalProvider = ({ children }) => {
                 functionName: 'totalSupply',
             }, 
             {
-                ...claimContract,
+                ...claimContract1,
+                functionName: 'totalClaimed',
+            },
+            {
+                ...claimContract2,
+                functionName: 'totalClaimed',
+            },
+            {
+                ...claimContract3,
                 functionName: 'totalClaimed',
             }
         ],
         onSuccess(data) {
+            console.log(data[0].toString(), data[1].toString(),data[2].toString(),data[3].toString())
             updateTotalSupply(data[0].toString())
-            updateTotalClaimed(data[1].toString())
+            updateTotalClaimed(data[1].toString(),data[2].toString(),data[3].toString())
         },
     })
 
@@ -62,10 +88,10 @@ export const GlobalProvider = ({ children }) => {
         })
     }
 
-    const updateTotalClaimed = (claimed) => {
+    const updateTotalClaimed = (claimed1, claimed2, claimed3) => {
         dispatch({
             type: 'UPDATE_TOTAL_CLAIMED',
-            payload: claimed
+            payload: {claimed1, claimed2, claimed3}
         })
     }
 
